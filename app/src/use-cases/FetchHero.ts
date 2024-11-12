@@ -12,8 +12,8 @@ export default class FetchHero {
     // Because that previous call validates if hero exists
     const [comments, puntuation, liked] = await Promise.all([
       this.database.heroComments(heroId),
-      this.database.puntuationByUsername(currentUsername),
-      this.database.likeStatusByUsername(currentUsername, heroId),
+      this.database.heroPuntuationByUsername(currentUsername, heroId),
+      this.database.heroLikeByUsername(currentUsername, heroId),
     ])
 
     return {

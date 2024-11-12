@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client'
 import { Database } from '.'
 import { Comment } from '../domain/Comment'
+import { Hero } from '../domain/Hero'
 
 export default class DatabasePrisma implements Database {
   private client = new PrismaClient()
@@ -24,17 +25,18 @@ export default class DatabasePrisma implements Database {
     }))
   }
 
-  async puntuationByUsername(username: string): Promise<number | null> {
+  async heroPuntuationByUsername(username: string, heroId: Hero['id']): Promise<number | null> {
     const puntuation = await this.client.heroPuntuation.findFirst({
       where: {
         authorUsername: username,
+        heroId,
       },
     })
 
     return puntuation?.puntuation ?? null
   }
 
-  async likeStatusByUsername(username: string, heroId: string): Promise<boolean> {
+  async heroLikeByUsername(username: string, heroId: string): Promise<boolean> {
     const like = await this.client.heroLike.findFirst({
       where: {
         heroId,
@@ -53,35 +55,28 @@ export default class DatabasePrisma implements Database {
       },
     })
 
-    // Already liked
-    if (status && currentLike) {
-      return
-    }
-
-    // Already disliked
-    if (!status && !currentLike) {
-      return
-    }
-
-    // Like
-    if (status && !currentLike) {
-      await this.client.heroLike.create({
-        data: {
-          heroId,
-          authorUsername,
-        },
-      })
-    }
-
-    // Remove like record
-    if (!status && currentLike) {
-      // Probably destroying data is not a good idea
-      // but for now it's fine.
-      await this.client.heroLike.delete({
-        where: {
-          id: currentLike.id,
-        },
-      })
+    switch (true) {
+      // Already liked or disliked
+      case status && currentLike !== null:
+      case !status && !currentLike:
+        return
+      // Like
+      case status && !currentLike:
+        await this.client.heroLike.create({
+          data: {
+            heroId,
+            authorUsername,
+          },
+        })
+        break
+      // Dislike
+      case !status && currentLike !== null:
+        await this.client.heroLike.delete({
+          where: {
+            id: currentLike.id,
+          },
+        })
+        break
     }
   }
 

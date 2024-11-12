@@ -66,17 +66,26 @@ export default function HeroPage() {
     username,
   } = useLoaderData<typeof loader>()
 
-  const { liked, setLikeStatus, comment, comments, setComment, postComment, puntuation, setPuntuation, save } = useHero(
-    {
-      heroId: params.id!,
-      username,
-      initialValues: {
-        liked: initialLiked,
-        comments: initialComments,
-        puntuation: initialPuntuation,
-      },
-    }
-  )
+  const {
+    liked,
+    setLikeStatus,
+    comment,
+    comments,
+    setComment,
+    postComment,
+    puntuation,
+    setPuntuation,
+    saveLike,
+    savePuntuation,
+  } = useHero({
+    heroId: params.id!,
+    username,
+    initialValues: {
+      liked: initialLiked,
+      comments: initialComments,
+      puntuation: initialPuntuation,
+    },
+  })
 
   async function handleSetPuntuationPrompt() {
     // TODO: Change this for a beautiful modal in the future
@@ -104,23 +113,24 @@ export default function HeroPage() {
     }
 
     setPuntuation(resultAsNumber)
-    await save()
+    await savePuntuation(resultAsNumber)
   }
 
-  const debouncedSave = useMemo(
-    () => debounce(save, 250),
+  const debouncedSavePuntuation = useMemo(
+    () => debounce(savePuntuation, 250),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   )
 
   async function handlePuntuationChange(puntuation: number) {
     setPuntuation(puntuation)
-    await debouncedSave()
+    await debouncedSavePuntuation(puntuation)
   }
 
   async function toggleLike() {
-    await setLikeStatus(!liked)
-    await save()
+    const nextValue = !liked
+    await setLikeStatus(nextValue)
+    await saveLike(nextValue)
   }
 
   return (

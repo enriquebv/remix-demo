@@ -16,13 +16,15 @@ interface Props {
 
 export default function useHero(props: Props) {
   const notification = useNotification()
-  // We use two refs to store original state and mutated one
-  // to detect on save if something changed and trigger the remote side effect.
-  // This enables the use of optimistic UI, because we can revert the state if something goes wrong.
-  const originalValues = useRef(structuredClone(props.initialValues))
-  const updatedValues = useRef(structuredClone(props.initialValues))
+  // We use a ref to store original state to detect on save if something changed
+  // and trigger the remote side effect. This enables the use of optimistic UI,
+  // because we can revert the state if something goes wrong.
+  const originalValues = useRef({
+    puntuation: props.initialValues.puntuation,
+    liked: props.initialValues.liked,
+  })
   const [state, setState] = useState({
-    ...structuredClone(props.initialValues),
+    ...props.initialValues,
     comment: '',
   })
   const fetchApi = useMemo(() => createFetchApi(props.heroId), [props.heroId])
@@ -38,7 +40,6 @@ export default function useHero(props: Props) {
       ...prevState,
       liked: status,
     }))
-    updatedValues.current.liked = status
   }
 
   async function setPuntuation(puntuation: number) {
@@ -46,7 +47,6 @@ export default function useHero(props: Props) {
       ...prevState,
       puntuation,
     }))
-    updatedValues.current.puntuation = puntuation
   }
 
   function setComment(comment: string) {
@@ -56,51 +56,33 @@ export default function useHero(props: Props) {
     }))
   }
 
-  async function save() {
-    let somethingSaved = false
-
-    const likedChange = originalValues.current.liked !== updatedValues.current.liked
-
-    if (likedChange) {
-      try {
-        await fetchApi('like', { status: state.liked })
-        originalValues.current.liked = state.liked
-        updatedValues.current.liked = state.liked
-        somethingSaved = true
-      } catch (error) {
-        setState((prevState) => ({
-          ...prevState,
-          liked: originalValues.current.liked,
-        }))
-        updatedValues.current.liked = originalValues.current.liked
-
-        notification.error('Something went wrong, please try again')
-        throw error
-      }
-    }
-
-    const puntuationChanged = originalValues.current.puntuation !== updatedValues.current.puntuation
-    if (puntuationChanged) {
-      try {
-        await fetchApi('puntuation', { puntuation: state.puntuation })
-        originalValues.current.puntuation = state.puntuation
-        updatedValues.current.puntuation = state.puntuation
-        somethingSaved = true
-      } catch (error) {
-        setState((prevState) => ({
-          ...prevState,
-          puntuation: originalValues.current.puntuation,
-        }))
-        updatedValues.current.puntuation = originalValues.current.puntuation
-
-        notification.error('Something went wrong, please try again')
-        throw error
-      }
-    }
-
-    if (somethingSaved) {
-      console.log('updated')
+  async function saveLike(liked: boolean) {
+    try {
+      await fetchApi('like', { status: liked })
+      originalValues.current.liked = liked
       notification.success('Done!')
+    } catch (error) {
+      setState((prevState) => ({
+        ...prevState,
+        liked: originalValues.current.liked,
+      }))
+      notification.error('Something went wrong, please try again')
+      throw error
+    }
+  }
+
+  async function savePuntuation(puntuation: number) {
+    try {
+      await fetchApi('puntuation', { puntuation })
+      originalValues.current.puntuation = puntuation
+      notification.success('Done!')
+    } catch (error) {
+      setState((prevState) => ({
+        ...prevState,
+        puntuation: originalValues.current.puntuation,
+      }))
+      notification.error('Something went wrong, please try again')
+      throw error
     }
   }
 
@@ -122,8 +104,6 @@ export default function useHero(props: Props) {
         comments: [...prevState.comments, nextComment],
       }))
       await fetchApi('comment', { comment: state.comment, uuid })
-      originalValues.current.comments = [...originalValues.current.comments, nextComment]
-
       notification.success('Done!')
     } catch (error) {
       // As part of optimistic UI, we want to revert the state
@@ -144,7 +124,8 @@ export default function useHero(props: Props) {
     setLikeStatus,
     setPuntuation,
     setComment,
-    save,
+    saveLike,
+    savePuntuation,
   }
 }
 
