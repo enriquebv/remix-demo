@@ -6,7 +6,6 @@ export default function useNotification() {
       toast.dismiss()
       toast(message, {
         type: 'success',
-        position: 'bottom-center',
         hideProgressBar: true,
       })
     },
@@ -14,7 +13,6 @@ export default function useNotification() {
       toast.dismiss()
       toast(message, {
         type: 'error',
-        position: 'bottom-center',
         hideProgressBar: true,
       })
     },

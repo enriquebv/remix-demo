@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
+import useNotification from './useNotification'
 // We use a type to avoid relating to a back-end implementation
 import { type Action } from '../../routes/api.hero.$id'
 import type { Comment } from '../domain/Comment'
-import useNotification from './useNotification'
 
 interface Props {
   heroId: string
@@ -16,25 +16,91 @@ interface Props {
 
 export default function useHero(props: Props) {
   const notification = useNotification()
+  // We use two refs to store original state and mutated one
+  // to detect on save if something changed and trigger the remote side effect.
+  // This enables the use of optimistic UI, because we can revert the state if something goes wrong.
+  const originalValues = useRef(structuredClone(props.initialValues))
+  const updatedValues = useRef(structuredClone(props.initialValues))
   const [state, setState] = useState({
-    ...props.initialValues,
+    ...structuredClone(props.initialValues),
     comment: '',
   })
+  const fetchApi = useMemo(() => createFetchApi(props.heroId), [props.heroId])
 
-  async function fetchApi(action: Action, payload: Record<string, unknown>) {
-    const response = await fetch(`/api/hero/${props.heroId}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        action,
-        payload,
-      }),
-    })
+  // Comments sorted by date
+  const sortedComments = useMemo(
+    () => state.comments.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+    [state.comments]
+  )
 
-    if (!response.ok) {
-      throw new Error('Something went wrong')
+  async function setLikeStatus(status: boolean) {
+    setState((prevState) => ({
+      ...prevState,
+      liked: status,
+    }))
+    updatedValues.current.liked = status
+  }
+
+  async function setPuntuation(puntuation: number) {
+    setState((prevState) => ({
+      ...prevState,
+      puntuation,
+    }))
+    updatedValues.current.puntuation = puntuation
+  }
+
+  function setComment(comment: string) {
+    setState((prevState) => ({
+      ...prevState,
+      comment,
+    }))
+  }
+
+  async function save() {
+    let somethingSaved = false
+
+    const likedChange = originalValues.current.liked !== updatedValues.current.liked
+
+    if (likedChange) {
+      try {
+        await fetchApi('like', { status: state.liked })
+        originalValues.current.liked = state.liked
+        updatedValues.current.liked = state.liked
+        somethingSaved = true
+      } catch (error) {
+        setState((prevState) => ({
+          ...prevState,
+          liked: originalValues.current.liked,
+        }))
+        updatedValues.current.liked = originalValues.current.liked
+
+        notification.error('Something went wrong, please try again')
+        throw error
+      }
+    }
+
+    const puntuationChanged = originalValues.current.puntuation !== updatedValues.current.puntuation
+    if (puntuationChanged) {
+      try {
+        await fetchApi('puntuation', { puntuation: state.puntuation })
+        originalValues.current.puntuation = state.puntuation
+        updatedValues.current.puntuation = state.puntuation
+        somethingSaved = true
+      } catch (error) {
+        setState((prevState) => ({
+          ...prevState,
+          puntuation: originalValues.current.puntuation,
+        }))
+        updatedValues.current.puntuation = originalValues.current.puntuation
+
+        notification.error('Something went wrong, please try again')
+        throw error
+      }
+    }
+
+    if (somethingSaved) {
+      console.log('updated')
+      notification.success('Done!')
     }
   }
 
@@ -42,18 +108,21 @@ export default function useHero(props: Props) {
     const prevComment = state.comment
     const uuid = crypto.randomUUID()
 
+    const nextComment: Comment = {
+      uuid: uuid,
+      author: props.username,
+      comment: state.comment,
+      createdAt: new Date().toISOString(),
+    }
+
     try {
       setState((prevState) => ({
         ...prevState,
         comment: '',
-        comments: [...prevState.comments].concat({
-          uuid: uuid,
-          author: props.username,
-          comment: prevComment,
-          createdAt: new Date().toISOString(),
-        }),
+        comments: [...prevState.comments, nextComment],
       }))
       await fetchApi('comment', { comment: state.comment, uuid })
+      originalValues.current.comments = [...originalValues.current.comments, nextComment]
 
       notification.success('Done!')
     } catch (error) {
@@ -68,67 +137,6 @@ export default function useHero(props: Props) {
     }
   }
 
-  async function setLikeStatus(status: boolean) {
-    const prevStatus = state.liked
-
-    setState((prevState) => ({
-      ...prevState,
-      liked: status,
-    }))
-
-    try {
-      await fetchApi('like', { status })
-
-      notification.success('Done!')
-    } catch (error) {
-      // As part of optimistic UI, we want to revert the state
-      setState((prevState) => ({
-        ...prevState,
-        liked: prevStatus,
-      }))
-
-      notification.error('Something went wrong with the like, please try again')
-
-      throw error
-    }
-  }
-
-  async function setPuntuation(puntuation: number) {
-    const prevPuntuation = state.puntuation
-    setState((prevState) => ({
-      ...prevState,
-      puntuation,
-    }))
-
-    try {
-      await fetchApi('puntuation', { puntuation })
-
-      notification.success('Done!')
-    } catch (error) {
-      // As part of optimistic UI, we want to revert the state
-      setState((prevState) => ({
-        ...prevState,
-        puntuation: prevPuntuation,
-      }))
-
-      notification.error('Something went wrong, please try again')
-
-      throw error
-    }
-  }
-
-  function setComment(comment: string) {
-    setState((prevState) => ({
-      ...prevState,
-      comment,
-    }))
-  }
-
-  const sortedComments = useMemo(
-    () => state.comments.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
-    [state.comments]
-  )
-
   return {
     ...state,
     comments: sortedComments,
@@ -136,5 +144,25 @@ export default function useHero(props: Props) {
     setLikeStatus,
     setPuntuation,
     setComment,
+    save,
+  }
+}
+
+function createFetchApi(heroId: string) {
+  return async function fetchApi(action: Action, payload: Record<string, unknown>) {
+    const response = await fetch(`/api/hero/${heroId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action,
+        payload,
+      }),
+    })
+
+    if (!response.ok) {
+      throw new Error('Something went wrong')
+    }
   }
 }

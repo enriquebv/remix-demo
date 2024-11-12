@@ -6,6 +6,8 @@ import { HeroNotFound } from '../src/infrastructure/exceptions'
 import Button from '../src/components/Button'
 import useHero from '../src/hooks/useHero'
 import Comments from '../src/components/Comments'
+import { useMemo } from 'react'
+import debounce from 'debounce'
 
 export const meta: MetaFunction = () => {
   return [{ title: 'New Remix App' }, { name: 'description', content: 'Welcome to Remix!' }]
@@ -64,17 +66,19 @@ export default function HeroPage() {
     username,
   } = useLoaderData<typeof loader>()
 
-  const { liked, setLikeStatus, comment, comments, setComment, postComment, puntuation, setPuntuation } = useHero({
-    heroId: params.id!,
-    username,
-    initialValues: {
-      liked: initialLiked,
-      comments: initialComments,
-      puntuation: initialPuntuation,
-    },
-  })
+  const { liked, setLikeStatus, comment, comments, setComment, postComment, puntuation, setPuntuation, save } = useHero(
+    {
+      heroId: params.id!,
+      username,
+      initialValues: {
+        liked: initialLiked,
+        comments: initialComments,
+        puntuation: initialPuntuation,
+      },
+    }
+  )
 
-  function handleSetPuntuationPrompt() {
+  async function handleSetPuntuationPrompt() {
     // TODO: Change this for a beautiful modal in the future
     const result = window.prompt('Enter a number between 0 and 10')
 
@@ -100,10 +104,23 @@ export default function HeroPage() {
     }
 
     setPuntuation(resultAsNumber)
+    await save()
+  }
+
+  const debouncedSave = useMemo(
+    () => debounce(save, 250),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  )
+
+  async function handlePuntuationChange(puntuation: number) {
+    setPuntuation(puntuation)
+    await debouncedSave()
   }
 
   async function toggleLike() {
     await setLikeStatus(!liked)
+    await save()
   }
 
   return (
@@ -126,7 +143,7 @@ export default function HeroPage() {
                 min='0'
                 max='10'
                 value={puntuation}
-                onChange={(event) => setPuntuation(Number(event.target.value))}
+                onChange={(event) => handlePuntuationChange(Number(event.target.value))}
                 className='w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700'
               />
               <div className='flex flex-nowrap gap-1'>
