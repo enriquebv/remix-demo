@@ -1,0 +1,30 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model HeroLike {
+  id             Int    @id @default(autoincrement())
+  heroId         String
+  authorUsername String
+}
+
+model HeroPuntuation {
+  id             Int    @id @default(autoincrement())
+  heroId         String
+  authorUsername String
+  puntuation     Int
+}
+
+model HeroComment {
+  id             Int      @id @default(autoincrement())
+  uuid           String   @default(uuid())
+  heroId         String
+  authorUsername String
+  comment        String
+  createdAt      DateTime @default(now())
+}
