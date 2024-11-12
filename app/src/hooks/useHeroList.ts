@@ -12,6 +12,11 @@ type HeroListState = (typeof HeroListState)[keyof typeof HeroListState]
 
 interface HeroListProps {
   page: number
+  /**
+   * Prefetch the next 3 pages and store it in memory to create an smoother experience.
+   * Disable it to get a not so smooth experience, or if you are DDOSing the API.
+   */
+  prefetch?: boolean
 }
 
 export default function useHeroList(props: HeroListProps) {
@@ -26,34 +31,37 @@ export default function useHeroList(props: HeroListProps) {
 
   const page = useMemo<Hero[]>(() => pages.find((page) => page.page === props.page)?.data ?? [], [pages, props.page])
 
-  async function fetchPage(page: number) {
+  async function fetchPage(pageToFetch: number) {
+    const alreadyFetched = pages.find((page) => page.page === pageToFetch)
+
+    if (alreadyFetched) {
+      return
+    }
+
     setState(HeroListState.Loading)
-    const response = await fetch('/api/hero?page=' + page)
+    const response = await fetch('/api/hero?page=' + pageToFetch)
     const json = await response.json()
 
-    setPages((prev) => {
-      let updated = [...prev]
+    setPages((prev) => [...prev, { page: json.page, data: json.data }])
 
-      // Remove the page if it exists
-      updated = updated.filter((page) => page.page !== json.page)
-
-      // Append new data
-      updated.push({
-        page: json.page,
-        data: json.data,
-      })
-
-      return updated
-    })
     setPagination(() => ({
       totalItems: json.total,
       totalPages: json.totalPages,
     }))
+
     setState(() => HeroListState.Idle)
   }
 
+  // TODO: Move to imperative to avoid issues
   useEffect(() => {
     fetchPage(props.page)
+
+    if (props.prefetch) {
+      fetchPage(props.page + 1)
+      fetchPage(props.page + 2)
+      fetchPage(props.page + 3)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.page])
 
   return {

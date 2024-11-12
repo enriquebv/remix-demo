@@ -8,7 +8,7 @@ interface HeroCard {
 
 export default function HeroCard(props: HeroCard) {
   return (
-    <div className='max-w-sm bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 w-52'>
+    <div className='max-w-sm bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 w-52 h-[280px]'>
       <Link to={`/hero/${props.id}`}>
         <img
           className='rounded-t-lg aspect-square object-cover'

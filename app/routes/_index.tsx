@@ -15,7 +15,7 @@ export const loader = onlyAuthed
 
 export default function Index() {
   const [page, setPage] = useState(1)
-  const { page: heroes, pagination, currentPageIsLoading } = useHeroList({ page })
+  const { page: heroes, pagination, currentPageIsLoading } = useHeroList({ page, prefetch: false })
 
   return (
     <Layout>
