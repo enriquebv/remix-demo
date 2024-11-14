@@ -21,7 +21,7 @@
 
 ## Pre-requisites
 
-- [Marvel API Credentails](https://developer.marvel.com/documentation/getting_started)
+- [Marvel API Credentials](https://developer.marvel.com/documentation/getting_started)
 - Install correct Node version:
   - `22.6`
   - Or use [NVM](https://github.com/nvm-sh/nvm) and use command `nvm use`.
