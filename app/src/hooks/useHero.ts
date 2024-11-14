@@ -60,7 +60,6 @@ export default function useHero(props: Props) {
     try {
       await fetchApi('like', { status: liked })
       originalValues.current.liked = liked
-      notification.success('Done!')
     } catch (error) {
       setState((prevState) => ({
         ...prevState,
@@ -75,7 +74,6 @@ export default function useHero(props: Props) {
     try {
       await fetchApi('puntuation', { puntuation })
       originalValues.current.puntuation = puntuation
-      notification.success('Done!')
     } catch (error) {
       setState((prevState) => ({
         ...prevState,
@@ -104,7 +102,6 @@ export default function useHero(props: Props) {
         comments: [...prevState.comments, nextComment],
       }))
       await fetchApi('comment', { comment: state.comment, uuid })
-      notification.success('Done!')
     } catch (error) {
       // As part of optimistic UI, we want to revert the state
       setState((prevState) => ({
