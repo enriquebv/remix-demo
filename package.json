@@ -3,6 +3,10 @@
   "private": true,
   "sideEffects": false,
   "type": "module",
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=9.0.0"
+  },
   "scripts": {
     "build": "remix vite:build",
     "dev": "remix vite:dev",
@@ -48,8 +52,5 @@
     "vite": "^5.1.0",
     "vite-tsconfig-paths": "^4.2.1",
     "vitest": "^2.1.5"
-  },
-  "engines": {
-    "node": ">=20.0.0"
   }
 }

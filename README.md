@@ -15,15 +15,34 @@
 ## Powered by
 
 - **Remix** for back API and front-end.
-- **TaliwindCSS** for fast UI prototyping.
+- **TaliwindCSS** for fast UI prototyping (and Flowbite/Tailwind UI copy pasting)
 - **Prisma** for database ORM.
+- **Vitest** for unit and integration testing.
 
-- 📖 [Remix docs](https://remix.run/docs)
+## Pre-requisites
+
+- [Marvel API Credentails](https://developer.marvel.com/documentation/getting_started)
+- Install correct Node version:
+  - `22.6`
+  - Or use [NVM](https://github.com/nvm-sh/nvm) and use command `nvm use`.
 
 ## Development
 
-Run the dev server:
+1. Create environment variables:
 
-```shellscript
-npm run dev
-```
+   ```shellscript
+   cp .env.example .env
+   # Add your own Marvel credentials before passing to next step!
+   ```
+
+2. Create DB and apply migrations:
+
+   ```shellscript
+   npm run migrate
+   ```
+
+3. Run the dev server:
+
+   ```shellscript
+   npm run dev
+   ```
