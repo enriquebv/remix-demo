@@ -46,3 +46,8 @@
    ```shellscript
    npm run dev
    ```
+
+## Relevant implementations
+
+- Mixed front-end and back-end pagination with client prefetch to create a fast pagination experience. See [useHeroList](./app/src/hooks/useHeroList.ts) hook.
+- [Optimistic UI](https://javascript.plainenglish.io/what-is-optimistic-ui-656b9d6e187c) in hero pages with state reverts on errors. See [useHero](./app/src/hooks/useHero.ts).
