@@ -1,4 +1,4 @@
-import { ActionFunctionArgs, json, LoaderFunctionArgs } from '@remix-run/node'
+import { json, LoaderFunctionArgs } from '@remix-run/node'
 import authenticate, { UnauthenticatedError } from '../context.server'
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -21,14 +21,4 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
     throw error
   }
-}
-
-export async function action({ request }: ActionFunctionArgs) {
-  const { action } = await request.json()
-
-  console.log('action is', action)
-
-  throw new Response(null, {
-    status: 204,
-  })
 }

@@ -7,7 +7,7 @@ import { Form, json, useActionData } from '@remix-run/react'
 import { sessionCookie } from '../cookies.server'
 
 export const meta: MetaFunction = () => {
-  return [{ title: 'New Remix App' }, { name: 'description', content: 'Welcome to Remix!' }]
+  return [{ title: 'Login | <Marvel/>' }]
 }
 
 export async function action({ request }: ActionFunctionArgs) {

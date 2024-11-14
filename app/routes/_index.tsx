@@ -8,7 +8,7 @@ import useHeroList from '../src/hooks/useHeroList'
 import SkeletonHeroCard from '../src/components/SkeletonHeroCard'
 
 export const meta: MetaFunction = () => {
-  return [{ title: 'New Remix App' }, { name: 'description', content: 'Welcome to Remix!' }]
+  return [{ title: 'Heroes | <Marvel/>' }]
 }
 
 export const loader = onlyAuthed

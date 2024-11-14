@@ -10,6 +10,10 @@ export interface Database {
   saveHeroLikeStatus(authorId: User['id'], heroId: Hero['id'], status: boolean): Promise<void>
   addHeroComment(authorId: User['id'], heroId: Hero['id'], uuid: string, comment: string): Promise<void>
   setHeroPuntuation(authorUsername: User['name'], heroId: Hero['id'], puntuation: number): Promise<void>
+  heroesStats(): Promise<{
+    likes: { heroId: Hero['id']; count: number }[]
+    commentsCount: { heroId: Hero['id']; count: number }[]
+  }>
 }
 
 export interface PaginatedResponse<T> {

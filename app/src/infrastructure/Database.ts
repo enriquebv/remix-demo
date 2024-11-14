@@ -122,4 +122,37 @@ export default class DatabasePrisma implements Database {
       },
     })
   }
+
+  async heroesStats(): Promise<{
+    likes: { heroId: Hero['id']; count: number }[]
+    commentsCount: { heroId: Hero['id']; count: number }[]
+  }> {
+    const likesCountResult = await this.client.heroLike.groupBy({
+      by: ['heroId'],
+      _count: {
+        heroId: true,
+      },
+      orderBy: {
+        _count: {
+          heroId: 'desc',
+        },
+      },
+    })
+    const commentsCountResult = await this.client.heroComment.groupBy({
+      by: ['heroId'],
+      _count: {
+        heroId: true,
+      },
+      orderBy: {
+        _count: {
+          heroId: 'desc',
+        },
+      },
+    })
+
+    return {
+      likes: likesCountResult.map(({ heroId, _count }) => ({ heroId, count: _count.heroId })),
+      commentsCount: commentsCountResult.map(({ heroId, _count }) => ({ heroId, count: _count.heroId })),
+    }
+  }
 }

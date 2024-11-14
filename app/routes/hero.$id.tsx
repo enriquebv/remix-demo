@@ -8,9 +8,20 @@ import useHero from '../src/hooks/useHero'
 import Comments from '../src/components/Comments'
 import { useMemo } from 'react'
 import debounce from 'debounce'
+import { DetailedHero } from '../src/domain/DetailedHero'
 
-export const meta: MetaFunction = () => {
-  return [{ title: 'New Remix App' }, { name: 'description', content: 'Welcome to Remix!' }]
+function dataHasHero(data: unknown): data is { hero: DetailedHero } {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data as any).hero !== undefined && (data as any).hero !== null
+}
+
+export const meta: MetaFunction = ({ data, params }) => {
+  // Rare case where the data is not available
+  if (!dataHasHero(data)) {
+    return [{ title: `Hero #${params.id} | <Marvel/>` }]
+  }
+
+  return [{ title: `${data.hero.name} | <Marvel/>` }]
 }
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {

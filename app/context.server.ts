@@ -8,6 +8,7 @@ import DatabasePrisma from './src/infrastructure/Database'
 import UserSetHeroLikeStatus from './src/use-cases/UserSetHeroLikeStatus'
 import UserSetHeroPuntuation from './src/use-cases/UserSetPuntuation'
 import UserAddHeroComment from './src/use-cases/UserAddHeroComment'
+import FetchHeroStats from './src/use-cases/FetchHeroStats'
 
 export class UnauthenticatedError extends Error {
   constructor() {
@@ -33,6 +34,7 @@ export default async function authenticate(request: Request) {
   const userSetHeroLikeStatusUseCase = new UserSetHeroLikeStatus(marvelApi, database)
   const userSetHeroPuntuationUseCase = new UserSetHeroPuntuation(marvelApi, database)
   const userAddHeroCommentUseCase = new UserAddHeroComment(marvelApi, database)
+  const fetchStats = new FetchHeroStats(marvelApi, database)
 
   return {
     session: { username },
@@ -41,6 +43,7 @@ export default async function authenticate(request: Request) {
     userSetHeroLikeStatus: userSetHeroLikeStatusUseCase.execute.bind(userSetHeroLikeStatusUseCase),
     userSetHeroPuntuation: userSetHeroPuntuationUseCase.execute.bind(userSetHeroPuntuationUseCase),
     userAddHeroComment: userAddHeroCommentUseCase.execute.bind(userAddHeroCommentUseCase),
+    fetchStats: fetchStats.execute.bind(fetchStats),
   }
 }
 
